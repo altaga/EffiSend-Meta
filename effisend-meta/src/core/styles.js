@@ -325,6 +325,188 @@ const GlobalStyles = StyleSheet.create({
     width: "66%",
     alignSelf: "flex-end",
   },
+// Profile Section Styles
+  profileSection: {
+    alignItems: "center",
+    paddingTop: 40,
+    paddingBottom: 40,
+  },
+
+  avatarContainer: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    marginBottom: 30,
+    padding: 8,
+    backgroundColor: "#1F2937",
+    shadowColor: mainColor,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+
+  avatarGradient: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 92,
+  },
+
+  username: {
+    fontSize: normalizeFontSize(32),
+    fontWeight: "700",
+    color: "#ffffff",
+    marginBottom: 8,
+    fontFamily: "Exo2_700Bold",
+  },
+
+  joinDate: {
+    fontSize: normalizeFontSize(16),
+    color: "#9CA3AF",
+    fontWeight: "400",
+    fontFamily: "Exo2_400Regular",
+  },
+
+  // Verification Section Styles
+  verificationSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 30,
+  },
+
+  verificationBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: mainColor,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+
+  verificationText: {
+    flex: 1,
+  },
+
+  verificationLabel: {
+    fontSize: normalizeFontSize(14),
+    color: "#9CA3AF",
+    fontWeight: "400",
+    fontFamily: "Exo2_400Regular",
+  },
+
+  verificationStatus: {
+    fontSize: normalizeFontSize(20),
+    fontWeight: "600",
+    color: "#ffffff",
+    fontFamily: "Exo2_700Bold",
+  },
+
+  humanAccessText: {
+    fontSize: normalizeFontSize(16),
+    color: "#9CA3AF",
+    textAlign: "left",
+    marginBottom: 40,
+    paddingLeft: 20,
+    fontFamily: "Exo2_400Regular",
+  },
+
+  // Actions Section Styles
+  actionsSection: {
+    paddingBottom: 40,
+  },
+
+  actionItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+    backgroundColor: "#1F2937",
+    borderRadius: 12,
+  },
+
+  actionLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  actionIcon: {
+    marginRight: 16,
+  },
+
+  worldcoinIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: mainColor,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  worldcoinText: {
+    color: "#ffffff",
+    fontSize: normalizeFontSize(20),
+    fontWeight: "600",
+    fontFamily: "Exo2_700Bold",
+  },
+
+  earnIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: mainColor,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  earnIconText: {
+    color: "#ffffff",
+    fontSize: normalizeFontSize(20),
+    fontWeight: "600",
+    fontFamily: "Exo2_700Bold",
+  },
+
+  actionTextContainer: {
+    flex: 1,
+  },
+
+  actionTitle: {
+    fontSize: normalizeFontSize(18),
+    fontWeight: "600",
+    color: "#ffffff",
+    marginBottom: 2,
+    fontFamily: "Exo2_700Bold",
+  },
+
+  actionSubtitle: {
+    fontSize: normalizeFontSize(14),
+    color: "#9CA3AF",
+    fontFamily: "Exo2_400Regular",
+  },
+
+  doneButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: quaternaryColor,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+
+  doneButtonText: {
+    color: "#ffffff",
+    fontSize: normalizeFontSize(14),
+    fontWeight: "600",
+    marginLeft: 4,
+    fontFamily: "Exo2_700Bold",
+  },
+
 });
 
 export default GlobalStyles;

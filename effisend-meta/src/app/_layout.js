@@ -9,6 +9,7 @@ import {
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
+import ToastManager from "toastify-react-native";
 import TransactionsModal from "../providers/transactionsModal";
 
 import React from "react";
@@ -55,7 +56,13 @@ export default function RootLayout() {
                 // Main Screen
               }
               <Stack.Screen name="(screens)/main" />
+              {
+                // Receipt Screen
+              }
+              <Stack.Screen name="receipt" />
             </Stack>
+            {/* Toast provider should be at the root level */}
+            <ToastManager />
             <StatusBar style="auto" />
           </MetaMaskProvider>
         </ContextProvider>

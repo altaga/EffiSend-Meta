@@ -10,6 +10,7 @@ import { StyleSheet, Text } from "react-native";
 import { View } from "react-native-web";
 import { Image } from "expo-image";
 import QRCode from "react-native-qrcode-svg";
+import { blockchains } from "../core/constants";
 
 export default function Receipt() {
   const glob = useGlobalSearchParams();
@@ -39,7 +40,7 @@ export default function Receipt() {
         </Text>
         <QRCode
           size={200}
-          value={`https://basescan.org/tx/${glob.hash}`}
+          value={`${blockchains[glob.chain].blockExplorer}tx/${glob.hash}`}
           ecl="L"
         />
       </View>

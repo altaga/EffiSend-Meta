@@ -9,6 +9,7 @@ import ContextModule from "../../providers/contextModule";
 import { useMetaMask } from "../../providers/metamaskProvider";
 import Tab1 from "./tabs/tab1";
 import Tab2 from "./tabs/tab2";
+import Tab3 from "./tabs/tab3";
 
 // Base state
 const BaseStateMain = {
@@ -45,12 +46,8 @@ const MainComponent = ({ navigation, route }) => {
       <Header />
       <View style={[GlobalStyles.main]}>
         {tab === 0 && <Tab1 navigation={navigation} />}
-        {
-          tab === 1 && <Tab2 navigation={navigation} />
-        }
-        {
-          //tab === 2 && <Tab3 navigation={navigation} />
-        }
+        {tab === 1 && <Tab2 navigation={navigation} />}
+        {tab === 2 && <Tab3 navigation={navigation} />}
         {
           //tab === 3 && <Tab4 navigation={navigation} />
         }
@@ -75,15 +72,16 @@ const MainComponent = ({ navigation, route }) => {
                 : GlobalStyles.selectorText
             }
           >
-            User
+            Home
           </Text>
         </Pressable>
+
         <Pressable
           style={GlobalStyles.selector}
           onPress={() => handleTabPress(1)}
         >
           <FontAwesome5
-            name="coins"
+            name="money-bill-wave"
             size={iconSize}
             color={tab === 1 ? mainColor : "white"}
           />
@@ -94,7 +92,26 @@ const MainComponent = ({ navigation, route }) => {
                 : GlobalStyles.selectorText
             }
           >
-            Business
+            Charge
+          </Text>
+        </Pressable>
+        <Pressable
+          style={GlobalStyles.selector}
+          onPress={() => handleTabPress(2)}
+        >
+          <FontAwesome5
+            name="id-badge"
+            size={iconSize}
+            color={tab === 2 ? mainColor : "white"}
+          />
+          <Text
+            style={
+              tab === 2
+                ? GlobalStyles.selectorSelectedText
+                : GlobalStyles.selectorText
+            }
+          >
+            EffiSend ID
           </Text>
         </Pressable>
       </View>

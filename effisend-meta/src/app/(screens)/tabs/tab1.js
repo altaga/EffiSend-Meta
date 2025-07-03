@@ -20,9 +20,11 @@ import {
   ScrollView,
   Text,
   TextInput,
-  View,
+  View
 } from "react-native";
 import QRCodeStyled from "react-native-qrcode-styled";
+import { Toast } from "toastify-react-native";
+import CamFace from "../../../components/camFace";
 import { abiBatchTokenBalances } from "../../../contracts/batchTokenBalances";
 import { abiERC20 } from "../../../contracts/erc20";
 import { blockchains, refreshTime } from "../../../core/constants";
@@ -42,7 +44,7 @@ import {
 import { useHOCS } from "../../../hocs/useHOCS";
 import ContextModule from "../../../providers/contextModule";
 
-const baseTab5State = {
+const baseTab1State = {
   // Transaction settings
   amount: "",
   chainSelected: setChains(blockchains)[0], // ""
@@ -58,7 +60,7 @@ const baseTab5State = {
 class Tab1 extends Component {
   constructor(props) {
     super(props);
-    this.state = baseTab5State;
+    this.state = baseTab1State;
     this.provider = blockchains.map((x) => setupProvider(x.rpc));
     this.EventEmitter = new NativeEventEmitter();
     this.controller = new AbortController();
@@ -86,7 +88,7 @@ class Tab1 extends Component {
         // Event Emitter
         this.EventEmitter.addListener("refresh", async () => {
           Keyboard.dismiss();
-          await this.setStateAsync(baseTab5State);
+          await this.setStateAsync(baseTab1State);
           await setAsyncStorageValue({ lastRefresh: Date.now() });
           this.refresh();
         });
@@ -148,7 +150,11 @@ class Tab1 extends Component {
 
   async refresh() {
     await this.setStateAsync({ refreshing: true });
-    await this.getBalance();
+    try {
+      await Promise.all([this.getUSD(), this.getBalance()]);
+    } catch (e) {
+      console.log(e);
+    }
     await this.setStateAsync({ refreshing: false });
   }
 
@@ -183,7 +189,6 @@ class Tab1 extends Component {
           ) ?? 0n
       )
     );
-    console.log(nativeBalances);
     const tokenBalances = await Promise.all(
       batchBalancesContracts.map(
         (x, i) =>
@@ -231,10 +236,9 @@ class Tab1 extends Component {
     return new Promise(async (resolve) => {
       const myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
-      const { data: kind } = await this.encryptData("did");
       const address = this.props.account;
       const raw = JSON.stringify({
-        kind,
+        kind:"did",
         address,
       });
 
@@ -265,7 +269,6 @@ class Tab1 extends Component {
           result: { user, wallets },
         } = await this.didRegister();
         const res = await this.faceRegister(image, user);
-
         if (
           res.result === "Address already exists" ||
           res === null ||
@@ -285,6 +288,14 @@ class Tab1 extends Component {
         await this.setStateAsync({
           loading: false,
         });
+        Toast.show({
+          type: "info",
+          text1: "You have won EFS tokens because you verified",
+          text2: "Go to the Effisend ID tab to claim",
+          position: "bottom",
+          visibilityTime: 10000,
+          autoHide: true,
+        });
         this.componentDidMount();
       } catch (e) {
         console.log(e);
@@ -295,12 +306,10 @@ class Tab1 extends Component {
   async createPayment(tempNonce) {
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
-    const tempUser = await getEncryptedStorageValue("user");
-    const { data: nonce } = await this.encryptData(tempNonce);
-    const { data: user } = await this.encryptData(tempUser);
+    const tempUser =  await getEncryptedStorageValue("user");
     const raw = JSON.stringify({
-      nonce,
-      user,
+      nonce:tempNonce,
+      user:tempUser,
     });
     const requestOptions = {
       method: "POST",
@@ -322,8 +331,7 @@ class Tab1 extends Component {
     });
     const bytes = randomBytes(16);
     const noncePayment = uuidV4(bytes);
-    const {res} = await this.createPayment(noncePayment);
-    console.log({ res });
+    const { res } = await this.createPayment(noncePayment);
     if (res === "BAD REQUEST") {
       await this.setStateAsync({
         loading: false,
@@ -362,7 +370,7 @@ class Tab1 extends Component {
     const signer = await provider.getSigner();
     const tx = await signer.sendTransaction(transaction);
     await tx.wait();
-    this.componentDidMount();
+    this.EventEmitter.emit("refresh");
   }
 
   // Utils

@@ -1,8 +1,8 @@
+import { Picker } from "@react-native-picker/picker";
 import { Contract, formatUnits } from "ethers";
 import { fetch } from "expo/fetch";
 import React, { Component, Fragment } from "react";
 import {
-  Dimensions,
   Image,
   Linking,
   Pressable,
@@ -10,10 +10,8 @@ import {
   Text,
   View,
 } from "react-native";
-import QRCode from "react-native-qrcode-svg";
 import VirtualKeyboard from "react-native-virtual-keyboard";
 import checkMark from "../../../assets/images/checkMark.png";
-import { logo } from "../../../assets/images/logo";
 import CamFace from "../../../components/camFace";
 import CamQR from "../../../components/camQR";
 import { abiBatchTokenBalances } from "../../../contracts/batchTokenBalances";
@@ -28,10 +26,11 @@ import {
   formatInputText,
   normalizeFontSize,
   rgbaToHex,
+  setAsyncStorageValue,
   setupProvider,
 } from "../../../core/utils";
-import ContextModule from "../../../providers/contextModule";
 import { useHOCS } from "../../../hocs/useHOCS";
+import ContextModule from "../../../providers/contextModule";
 
 const BaseStatePaymentWallet = {
   // Base
@@ -52,7 +51,9 @@ const BaseStatePaymentWallet = {
     name: blockchains[0].tokens[0].symbol,
     tokenAddress: blockchains[0].tokens[0].address,
     icon: blockchains[0].tokens[0].icon,
+    chain: 0,
   },
+  destinationChain: 0,
   // QR print
   saveData: "",
   // Utils
@@ -140,25 +141,53 @@ class Tab2 extends Component {
 
   printURL() {
     window.open(
-      `http://localhost:8081/receipt?kindPayment=${this.state.kindPayment}&amount=${this.state.transactionDisplay.amount}&name=${this.state.transactionDisplay.name}&hash=${this.state.hash}`,
+      `/receipt?kindPayment=${this.state.kindPayment}&amount=${this.state.transactionDisplay.amount}&name=${this.state.transactionDisplay.name}&hash=${this.state.hash}&chain=${this.state.transactionDisplay.chain}`,
       "_blank"
     );
   }
 
   componentDidMount() {
-    this.props.navigation.addListener("focus", async () => {
-      this.setState(BaseStatePaymentWallet);
-    });
+    this.setState(BaseStatePaymentWallet);
   }
+
+  async getUSD() {
+    const array = blockchains
+      .map((x) => x.tokens.map((token) => token.coingecko))
+      .flat();
+    var myHeaders = new Headers();
+    myHeaders.append("accept", "application/json");
+    var requestOptions = {
+      signal: this.controller.signal,
+      method: "GET",
+      headers: myHeaders,
+      redirect: "follow",
+    };
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${array.toString()}&vs_currencies=usd`,
+      requestOptions
+    );
+    const result = await response.json();
+    const usdConversionTemp = array.map((x) => result[x].usd);
+    let acc = 0;
+    const usdConversion = blockchains.map((blockchain) =>
+      blockchain.tokens.map(() => {
+        acc++;
+        return usdConversionTemp[acc - 1];
+      })
+    );
+    await setAsyncStorageValue({ usdConversion });
+    this.context.setValue({ usdConversion });
+  }
+
   async payFromAnySource(i, j) {
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
-    const { data: user } = await this.encryptData(this.state.user);
+    // ONLY USDC cross chain payment
     const raw = JSON.stringify({
-      user,
-      command: j === 0 ? "transfer" : "tokenTransfer",
-      chain: i,
-      token: j,
+      user: this.state.user,
+      chainFrom: blockchains[i].apiname,
+      chainTo: blockchains[this.state.destinationChain].apiname,
+      token: blockchains[i].tokens[j].address,
       amount: (
         this.state.amount / this.context.value.usdConversion[i][j]
       ).toFixed(blockchains[i].tokens[j].decimals),
@@ -173,7 +202,6 @@ class Tab2 extends Component {
     fetch(`/api/submitPayment`, requestOptions)
       .then((response) => response.json())
       .then(async (result) => {
-        console.log(result.result);
         if (result.result.error === null) {
           await this.setStateAsync({
             status: "Confirmed",
@@ -189,14 +217,12 @@ class Tab2 extends Component {
   async getAddressFrom(kind, data) {
     let raw;
     if (kind === 0) {
-      const { data: nonce } = await this.encryptData(data);
       raw = JSON.stringify({
-        nonce,
+        nonce: data,
       });
     } else if (kind === 1) {
-      const { data: user } = await this.encryptData(data);
       raw = JSON.stringify({
-        user,
+        user: data,
       });
     }
     return new Promise((resolve, reject) => {
@@ -309,15 +335,32 @@ class Tab2 extends Component {
       <Fragment>
         <View style={[GlobalStyles.main]}>
           {this.state.stage === 0 && (
-            <View
-              style={{
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ width: "90%", height: "100%" }}
+              contentContainerStyle={{
                 height: "100%",
                 width: "100%",
                 justifyContent: "space-between",
                 alignItems: "center",
                 padding: 10,
+                gap: 16,
               }}
             >
+              <Text style={GlobalStyles.title}>Destination Network</Text>
+              <Picker
+                style={[GlobalStyles.picker, { paddingVertical: 10 }]}
+                selectedValue={this.state.destinationChain}
+                onValueChange={(i, _) => {
+                  this.setState({
+                    destinationChain: i,
+                  });
+                }}
+              >
+                {blockchains.map((blockchain, i) => (
+                  <Picker.Item key={i} label={blockchain.network} value={i} />
+                ))}
+              </Picker>
               <Text style={GlobalStyles.title}>Enter Amount (USD)</Text>
               <Text style={{ fontSize: 36, color: "white" }}>
                 {deleteLeadingZeros(formatInputText(this.state.amount))}
@@ -378,16 +421,19 @@ class Tab2 extends Component {
                   <Text style={GlobalStyles.buttonText}>Pay with FaceID</Text>
                 </Pressable>
               </View>
-            </View>
+            </ScrollView>
           )}
           {this.state.stage === 1 && this.state.kindPayment === 0 && (
-            <View
-              style={{
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ width: "90%", height: "100%" }}
+              contentContainerStyle={{
                 height: "100%",
-                width: "90%",
+                width: "100%",
                 justifyContent: "space-between",
                 alignItems: "center",
-                paddingVertical: 30,
+                padding: 10,
+                gap: 16,
               }}
             >
               <View style={{ alignItems: "center" }}>
@@ -404,7 +450,7 @@ class Tab2 extends Component {
                   height: "auto",
                   width: "80%",
                   marginVertical: 20,
-                  borderColor: secondaryColor,
+                  borderColor: this.state.loading ? mainColor : secondaryColor,
                   borderWidth: 5,
                   borderRadius: 10,
                   aspectRatio: 1,
@@ -414,9 +460,11 @@ class Tab2 extends Component {
                   facing={"back"}
                   callbackAddress={async (nonce) => {
                     try {
+                      await this.setStateAsync({ loading: true });
                       const { wallets, address, user } =
                         await this.getAddressFrom(0, nonce);
                       await this.setStateAsync({ wallets, address, user });
+                      await this.getUSD();
                       await this.getBalances();
                     } catch (error) {
                       console.log(error);
@@ -428,16 +476,19 @@ class Tab2 extends Component {
               <View
                 key={"This element its only to align the NFC reader in center"}
               />
-            </View>
+            </ScrollView>
           )}
           {this.state.stage === 1 && this.state.kindPayment === 1 && (
-            <View
-              style={{
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ width: "90%", height: "100%" }}
+              contentContainerStyle={{
                 height: "100%",
-                width: "90%",
+                width: "100%",
                 justifyContent: "space-between",
                 alignItems: "center",
-                paddingVertical: 30,
+                padding: 10,
+                gap: 16,
               }}
             >
               <View style={{ alignItems: "center" }}>
@@ -452,9 +503,9 @@ class Tab2 extends Component {
               <View
                 style={{
                   height: "auto",
-                  width: "80%",
+                  width: "70%",
                   marginVertical: 20,
-                  borderColor: secondaryColor,
+                  borderColor: this.state.loading ? mainColor : secondaryColor,
                   borderWidth: 5,
                   borderRadius: 10,
                   aspectRatio: 1,
@@ -465,12 +516,14 @@ class Tab2 extends Component {
                   take={this.state.take}
                   onImage={async (image) => {
                     try {
-                      const { result: user } = await this.findUserFaceID(image);
+                      const res = await this.findUserFaceID(image);
+                      const user = res.result;
                       const { wallets, address } = await this.getAddressFrom(
                         1,
                         user
                       );
                       await this.setStateAsync({ wallets, address, user });
+                      await this.getUSD();
                       await this.getBalances();
                     } catch (error) {
                       console.log(error);
@@ -497,7 +550,7 @@ class Tab2 extends Component {
                   {this.state.loading ? "Processing..." : "Take Picture"}
                 </Text>
               </Pressable>
-            </View>
+            </ScrollView>
           )}
           {this.state.stage === 2 && (
             <React.Fragment>
@@ -533,11 +586,15 @@ class Tab2 extends Component {
                         style={[
                           GlobalStyles.buttonStyle,
                           this.state.loading ? { opacity: 0.5 } : {},
-                          (token.symbol === "USDC" ||
-                            token.symbol === "EURC") && {
-                            backgroundColor: "#2775ca",
-                            borderColor: "#2775ca",
-                          },
+                          token.symbol === "USDC" || token.symbol === "EURC"
+                            ? {
+                                backgroundColor: "#2775ca",
+                                borderColor: "#2775ca",
+                              }
+                            : {
+                                backgroundColor: secondaryColor,
+                                borderColor: secondaryColor,
+                              },
                         ]}
                         onPress={async () => {
                           try {
@@ -551,6 +608,7 @@ class Tab2 extends Component {
                                 ).toFixed(6),
                                 name: token.symbol,
                                 icon: token.icon,
+                                chain: token.i,
                               },
                               status: "Processing...",
                               stage: 3,
@@ -579,14 +637,18 @@ class Tab2 extends Component {
           {
             // Stage 3
             this.state.stage === 3 && (
-              <View
-                style={{
-                  paddingTop: 10,
-                  alignItems: "center",
-                  height: "100%",
-                  justifyContent: "space-between",
-                }}
-              >
+              <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ width: "90%", height: "100%" }}
+              contentContainerStyle={{
+                height: "100%",
+                width: "100%",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: 10,
+                gap: 16,
+              }}
+            >
                 <Image
                   source={checkMark}
                   alt="check"
@@ -627,7 +689,7 @@ class Tab2 extends Component {
                         Transaction
                       </Text>
                       <Text style={{ fontSize: 14, color: "white" }}>
-                        {this.state.kindPayment === 1
+                        {this.state.kindPayment === 0
                           ? "QR Payment"
                           : "FaceID Payment"}
                       </Text>
@@ -710,7 +772,7 @@ class Tab2 extends Component {
                     <Text style={GlobalStyles.buttonText}>Done</Text>
                   </Pressable>
                 </View>
-              </View>
+              </ScrollView>
             )
           }
         </View>

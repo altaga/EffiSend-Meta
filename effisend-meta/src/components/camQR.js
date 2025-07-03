@@ -1,5 +1,6 @@
 import { CameraView } from "expo-camera";
 import React, { Component, createRef } from "react";
+import { isValidUUID } from "../core/utils";
 
 export default class CamQR extends Component {
   constructor(props) {
@@ -12,12 +13,15 @@ export default class CamQR extends Component {
 
   handleBarcodeScanned = (result) => {
     let temp = result.data;
-    if (
-      temp.length === 42 ||
-      (temp.indexOf("ethereum:") > -1 && this.state.scanning)
-    ) {
-      this.data.current = temp;
-      this.setState({ scanning: false });
+    if (isValidUUID(temp) && this.state.scanning) {
+      this.setState(
+        {
+          scanning: false,
+        },
+        () => {
+          this.props.callbackAddress(temp);
+        }
+      );
     }
   };
 

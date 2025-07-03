@@ -1,6 +1,7 @@
 import { CameraView } from "expo-camera";
 import { ImageManipulator } from "expo-image-manipulator";
 import React, { Component, createRef } from "react";
+import { Alert } from "react-native";
 
 export default class CamFace extends Component {
   constructor(props) {
@@ -34,7 +35,7 @@ export default class CamFace extends Component {
       });
       image = `${imagePost}`;
     } else {
-      image = `${preImage.replace(/^data:image\/[a-z]+;base64,/, '')}`;
+      image = `${preImage.replace(/^data:image\/[a-z]+;base64,/, "")}`;
     }
     this.props.onImage(image);
   }

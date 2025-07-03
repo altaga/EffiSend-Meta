@@ -48,7 +48,7 @@ const ConnectComponent = ({ navigation }) => {
           }}
         />
         <Text style={[GlobalStyles.title]}>
-          Your face, your crypto. Secure and effortless payments.
+          Authenticate with your face, send USDC anywhere.
         </Text>
       </View>
     </SafeAreaView>

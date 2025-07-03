@@ -21,23 +21,22 @@ class SplashLoading extends Component {
   static contextType = ContextModule;
 
   async componentDidMount() {
-    this.props.navigation.addListener("focus", async () => {
-      //this.erase();
-      const wallets = await getAsyncStorageValue("wallets");
-      const balances = await getAsyncStorageValue("balances");
-      const usdConversion = await getAsyncStorageValue("usdConversion");
-      this.context.setValue({
-        // Base Wallet
-        wallets: wallets ?? this.context.value.wallets,
-        balances: balances ?? this.context.value.balances,
-        // Shared
-        usdConversion: usdConversion ?? this.context.value.usdConversion,
-        // Setup
-        starter: true,
-      });
-      this.props.navigation.navigate("(screens)/connect");
+    console.log(this.props.route);
+    //this.erase();
+    console.log("Setup Correct");
+    const wallets = await getAsyncStorageValue("wallets");
+    const balances = await getAsyncStorageValue("balances");
+    const usdConversion = await getAsyncStorageValue("usdConversion");
+    this.context.setValue({
+      // Base Wallet
+      wallets: wallets ?? this.context.value.wallets,
+      balances: balances ?? this.context.value.balances,
+      // Shared
+      usdConversion: usdConversion ?? this.context.value.usdConversion,
+      // Setup
+      starter: true,
     });
-    this.props.navigation.addListener("blur", async () => {});
+    this.props.navigation.navigate("(screens)/connect");
   }
 
   async erase() {
