@@ -1,161 +1,108 @@
 # EffiSend
 
-EffiSend: Next-generation crosschain payment wallet with FaceID, QR payments, smart USD balance management, and programmable multi-chain transactions—powered by MetaMask SDK, Circle Developer Controlled Wallets, and LiFi.
+EffiSend: Next-generation crosschain payment dApp with **MetaMask SDK**, **Circle Wallets**, and **LiFi** (via CCTPv2) — enabling FaceID, QR payments, and instant cross-chain transfers all in one.
 
 <img src="./Images/featuredEffiSend.png">
 
----
+# 🚀 Core Stack
 
-## Fast Links:
+EffiSend is a robust combination of these technologies:
 
-URL: [CODE](./EffiSend/)
+✅ **MetaMask SDK** for seamless, secure, user-controlled wallet onboarding.  
+✅ **Circle Developer Controlled Wallets** for programmable custody, approvals & contract execution with no private key management.  
+✅ **LiFi** to abstract bridging & cross-chain swaps into single-tap payments via **CCTPv2**.
 
-PLAYSTORE LINK: *Coming soon*
+It’s a complete demonstration of building secure, user-friendly, multi-chain finance using modern web3 infrastructure.
 
-VIDEODEMO: *Coming soon*
+# ⚡Fast Links:
 
----
+APP CODE: [CODE](./effisend-meta/)
+
+WEB DAPP: [LINK]()
+
+VIDEODEMO: [LINK]()
 
 # System Diagram
 
-## Circle & LiFi Integration:
-
 <img src="./Images/effisend_architecture.png">
 
-- **MetaMask SDK**: Secure, non-custodial wallet integration for native user onboarding and signatures.  
-- **Circle Developer Controlled Wallets**: Custodial programmable wallets secured without mnemonics, tied to DID/FaceID.  
-- **LiFi Crosschain Router**: For seamless cross-chain bridging and token swaps, fully abstracted from end-user.
+- **MetaMask SDK**: Handles native user wallet connections, chain switching, account management and token approval.  
+- **Circle Developer Controlled Wallets **: Secure, non-custodial by design yet managed with Circle's infrastructure — enabling operations like `createTransaction` or `createContractExecutionTransaction` programmatically.  
+- **LiFi SDK**: Used to create routes and execute cross-chain swaps or bridges automatically, enabling seamless multi-chain payments.
 
----
+## 🦊 MetaMask SDK
 
-# 🚀 Features
+At the heart of EffiSend is the `MetaMaskProvider` — a robust custom React context built around the **MetaMask SDK**. 
 
-## 💳 Multi-chain Programmable Wallet
+[CODE LINK](./effisend-meta/src/providers/metamaskProvider.js)
 
-EffiSend leverages **Circle Developer Controlled Wallets** for secure, non-custodial custody:
+This core component handles everything needed to integrate MetaMask into a modern progressive web dApp:
 
-- Each wallet tied to a FaceID/DID.
-- All assets secured on Circle; no user-managed private keys.
-- Transactions signed and executed via backend Circle SDK.
+- Initializes MetaMask SDK with automatic retry strategy.  
+- Connects the wallet, switches chains, tracks accounts & chain ID.  
+- Persists user sessions in `AsyncStorage` (so reconnect is seamless).  
+- Adds automatic event listeners for `accountsChanged`, `chainChanged`, and `disconnect`.  
+- Exposes easy hooks like `useMetaMask` and `useMetaMaskConnection` across the app.
 
+### Example usage
 ```javascript
-const transaction = {
-    amount,
-    destinationAddress,
-    walletId,
-    blockchain: blockchains[req.body.chain],
-};
-await circleDeveloperSdk.createTransaction({
-    ...transaction,
-    fee: { type: "level", config: { feeLevel: "MEDIUM" } }
-});
+import { useMetaMask } from './metamaskProvider';
+
+const { isConnected, connectWallet, account } = useMetaMask();
+
+return (
+  <>
+    {isConnected ? <Text>Wallet: {account}</Text> : 
+      <Button onPress={connectWallet} title="Connect MetaMask" />}
+  </>
+);
 ```
 
----
+### Under the hood
+The `MetaMaskProvider` file does much more than a basic integration:
 
-## 🔗 Cross-chain LiFi Payments
+- Keeps the SDK and provider inside refs, to stay alive across re-renders.
+- Initializes only once on mount, with up to 3 attempts (`maxInitializationAttempts`).
+- Uses:
+  ```javascript
+  const MMSDK = new MetaMaskSDK({ dappMetadata });
+  await MMSDK.init();
+  ```
+- Automatically reconnects if the user previously approved it, by checking `@metamask_connection_preference` in AsyncStorage.
+- Reactively saves the last connected account.
 
-EffiSend integrates **LiFi** via backend APIs for truly seamless cross-chain payments.
+## 🔐 Circle Developer Controlled Wallets. 
 
-- Select token & amount in USD.
-- LiFi handles routing, bridging, and swaps under the hood.
-- User sees only USD amounts and transaction confirmation.
+EffiSend uses **Circle Developer Controlled Wallets** to handle all payments, approvals, and contract executions securely — without ever exposing private keys. **Each wallet is linked to a user’s FaceID**
 
-Transaction flow managed through:
-```javascript
-const quote = await getQuote(quoteRequest);
-const route = convertQuoteToRoute(quote);
-```
+### Programmable transactions
 
----
+Our Cloud Function uses the official Circle Wallets SDK to:
 
-## 🔥 FaceID Biometric Verification
+- Execute native token transfers
+- Execute ERC20 token transfers via smart contract.
+- Execute cross-chain bridging via LiFi and CCTPv2
 
-<img src="./Images/faceid.png">
+### Example for a **native on-chain payment**:
 
-- Register or pay via FaceID with `expo-camera` and secure uploads.
-- Wallet creation & payment approvals tied to biometrics, removing passwords.
-
----
-
-## 📷 QR Code Payments
-
-<img src="./Images/qr_pay.png">
-
-- Generate QR codes to receive payments.
-- Scan peer or merchant QR codes to instantly pay.
-
-Built with `react-native-qrcode-svg` & `CamQR` component.
-
----
-
-## 💰 USD Portfolio & Multi-Token Manager
-
-<img src="./Images/balance_tab.png">
-
-- Displays balances across chains & tokens.
-- Uses Coingecko API for live USD rates.
-- Batch smart contracts fetch balances in a single call.
-
----
-
-## 🥇 Trust Score & Rewards
-
-<img src="./Images/profile_rewards.png">
-
-- Verify with FaceID to unlock EFS rewards.
-- Grow your trust score for better fees and premium features.
-
----
-
-# 🛠️ Main Technical Implementations
-
-| Component / Screen      | Description                                  |
-|--------------------------|---------------------------------------------|
-| `metamaskProvider.js`    | MetaMask SDK, chain & account context.      |
-| `tab1.js`                | Balances, FaceID register, add funds, QR.   |
-| `tab2.js`                | Payments: scan QR / FaceID, pay via LiFi.   |
-| `tab3.js`                | Profile, trust score, rewards claim.        |
-| `receipt.js`             | Printable receipt + transaction QR.         |
-| `header.js`              | Wallet connect / disconnect buttons.        |
-| `camFace.js`, `camQR.js` | Secure camera components.                   |
-
----
-
-# 🔥 LiFi + Circle Developer Controlled Wallets (Backend)
-
-EffiSend uses a **Google Cloud Function (Node.js)** to securely execute payments using Circle Developer Controlled Wallets.  
-For cross-chain payments it integrates **LiFi SDK**, executing bridging & swaps with full custody on Circle.
-
----
-
-## 🚀 Example Backend Flow
-
-### 1. Check if user exists
-```javascript
-const query = await db.collection("DID").where("user", "==", decrypted).get();
-```
-
----
-
-### 2. Same-chain payment
-#### - Native transfer
 ```javascript
 await circleDeveloperSdk.createTransaction({
     amount: [amount],
     destinationAddress,
     walletId: wallet.id,
-    blockchain: blockchains[chainIndex],
-    fee: { type: "level", config: { feeLevel: "MEDIUM" } },
+    blockchain,
+    fee: { type: "level", config: { feeLevel: "MEDIUM" } }
 });
 ```
-#### - ERC20 transfer
+
+### For ERC20 payments, we encode the contract call:
+
 ```javascript
 const interface = new ethers.utils.Interface(abiERC20);
 const transaction = interface.encodeFunctionData("transferFrom", [
     address,
     destinationAddress,
-    ethers.utils.parseUnits(amount, tokenDecimals)
+    ethers.utils.parseUnits(amount, decimals)
 ]);
 await circleDeveloperSdk.createContractExecutionTransaction({
     walletId: wallet.id,
@@ -165,28 +112,35 @@ await circleDeveloperSdk.createContractExecutionTransaction({
 });
 ```
 
----
+## 🌉 LiFi Cross-chain Routing (integrated with Circle Wallets)
 
-### 3. Cross-chain payment with LiFi
-#### a) Transfer tokens to wallet
+When users want to pay across chains (e.g. USDC on Base → USDC on Arbitrum), EffiSend uses **LiFi SDK** to:
+
+1. Fetch the optimal quote for bridging + swap:
+
 ```javascript
-const transactionXY = interface.encodeFunctionData("transferFrom", [
-    address, wallet.address,
-    ethers.utils.parseUnits(amount, decimals)
-]);
-await circleDeveloperSdk.createContractExecutionTransaction(...);
+const quote = await getQuote({
+    fromChain, toChain, fromToken, toToken, fromAmount, fromAddress
+});
+const route = convertQuoteToRoute(quote);
 ```
 
-#### b) Approve LiFi contract
+2. Approve the LiFi contract on the origin chain:
+
 ```javascript
-const quote = await getQuote(quoteRequest);
 const transactionApproval = interface.encodeFunctionData("approve", [
     transaction.to, quoteRequest.fromAmount
 ]);
-await circleDeveloperSdk.createContractExecutionTransaction(...);
+await circleDeveloperSdk.createContractExecutionTransaction({
+    walletId: wallet.id,
+    callData: transactionApproval,
+    contractAddress: token,
+    fee: { type: "level", config: { feeLevel: "MEDIUM" } }
+});
 ```
 
-#### c) Execute LiFi bridge + swap
+3. Execute the LiFi contract which performs the bridge + swap:
+
 ```javascript
 await circleDeveloperSdk.createContractExecutionTransaction({
     walletId: wallet.id,
@@ -197,43 +151,52 @@ await circleDeveloperSdk.createContractExecutionTransaction({
 });
 ```
 
----
+# 📷 FaceID + QR Payments (On Top of Circle + LiFi)
 
-### ✅ Highlights
-- Full custody by **Circle Developer Controlled Wallets** (no private keys exposed).
-- Cross-chain routes by **LiFi SDK**.
-- User only sees simple USD payment confirmation.
+EffiSend adds a human layer with **biometric FaceID** and **secure QR payments**.
 
----
+- Scan face to link or pay with your Circle wallet.
+- Or scan a QR code tied to a payment nonce.
 
-# 📝 Deployment Notes
+<img src="./Images/featuredEffiSend.png">
 
-- Hosted as **Google Cloud Functions** (serverless).
-- User wallets indexed in **Firestore** by DID.
-- Sensitive user assets never leave Circle’s programmable wallets.
+All payments flow back into the **Circle Wallets + LiFi engine**, meaning:
 
----
+- You can pay from any supported chain.  
+- No manual bridging.  
+- Still fully controlled by Circle.
+
+<img src="./Images/featuredEffiSend.png">
+
+# 💰 USD Balances & Multi-Token Portfolio
+
+- Shows balances from multiple chains.
+- Aggregates USD values using Coingecko.
+- Makes it easy for users to fund their FaceID wallet from MetaMask using native or ERC20 tokens.
+
+<img src="./Images/featuredEffiSend.png">
+
+# 🥇 Trust Score & Rewards
+
+- Biometric verification (FaceID) unlocks a trust score and EFS token rewards.
+- Verified users get reduced fees on transactions.
+
+<img src="./Images/featuredEffiSend.png">
+
+# 📚 Main Codebase Map
+
+| File / Component           | What it does                                   |
+|-----------------------------|-----------------------------------------------|
+| `metamaskProvider.js`       | MetaMask SDK wallet connection & session.     |
+| `tab1.js`                   | View balances, fund FaceID wallet, generate QR for payments|
+| `tab2.js`                   | Pay via FaceID or QR, with LiFi cross-chain.  |
+| `tab3.js`                   | Trust score, profile, claim EFS rewards.      |
+| `receipt.js`                | Payment receipt with explorer QR.             |
+| `camFace.js` / `camQR.js`   | Camera inputs for biometric & QR.             |
+| `header.js`                 | Connect/disconnect MetaMask.                  |
 
 # 🔗 References
 
 1. [MetaMask SDK](https://github.com/MetaMask/sdk)
 2. [Circle Developer Controlled Wallets](https://developers.circle.com)
 3. [LiFi Crosschain Routing](https://www.lifi.io)
-4. [Coingecko API](https://www.coingecko.com/en/api)
-
----
-
-✅ **Ready for production:**  
-EffiSend turns complex multi-chain payments into a simple FaceID scan or QR tap — while MetaMask, Circle and LiFi handle the complexity under the hood.
-
----
-
-# 📸 UI Screenshots
-
-| Home / Balances | Payments | Profile / Rewards |
-|-----------------|----------|-------------------|
-| <img src="./Images/ui_home.png" width="32%"> | <img src="./Images/ui_payment.png" width="32%"> | <img src="./Images/ui_profile.png" width="32%"> |
-
----
-
-**Built with ❤️ using MetaMask SDK, Circle Programmable Wallets, and LiFi.**
