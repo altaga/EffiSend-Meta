@@ -2,7 +2,7 @@
 
 EffiSend: Next-generation crosschain payment dApp with **MetaMask SDK**, **Circle Wallets**, and **LiFi** (via CCTPv2) — enabling FaceID, QR payments, and instant cross-chain transfers all in one.
 
-<img src="./Images/logo.png" width="50%">
+<img src="./Images/diagram.drawio.png">
 
 <br>
 
