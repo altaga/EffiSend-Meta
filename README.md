@@ -179,6 +179,34 @@ All technical implementations for cross-chain payments are included here.
 
 <br>
 
+## FaceID Payment
+
+EffiSend enables seamless payments via facial recognition by linking a user’s unique biometric profile to their programmable wallet.
+
+- A photo of the person's face is taken, and through our AI, we obtain the result of the person's user. This AI already has an Antispoofing algorithm implemented to prevent malicious actors from making the detection and return the credential to execute the transaction on [Circle Wallets section](#-circle-developer-controlled-wallets).
+
+    ```python
+    @app.post("/findUser", dependencies=[Depends(check_api_key)])
+    async def findUser(item: ItemFind):
+        random_string = os.urandom(32).hex()
+        userImage = base64.b64decode(item.image)
+        userImage = Image.open(BytesIO(userImage))
+        userImage.save(f'deepface/temp/{random_string}.jpg')
+        try:
+            result = DeepFace.find(img_path= f'deepface/temp/{random_string}.jpg', db_path='deepface/db', anti_spoofing = True)
+            return {"result": result[0].identity[0].split('.')[0].split('/')[2]}
+        except ValueError as e:
+            return {"result": False}
+        finally:
+            os.remove(f'deepface/temp/{random_string}.jpg')
+    ```
+
+All technical implementations for AI server are included here.
+
+- [Face Recognition Server](./faceRecognition/main.py)
+
+<br>
+
 # Features:
 
 EffiSend’s architecture allows users to complete payments on **any supported chain** with a single FaceID scan or QR interaction — fully abstracting away network, swap, and bridging complexities. 
