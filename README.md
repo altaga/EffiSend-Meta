@@ -12,7 +12,7 @@ APP CODE: [CODE](./effisend-meta/)
 
 WEB DAPP: [LINK](https://effisend.expo.app)
 
-VIDEODEMO: [LINK](pending...)
+VIDEODEMO: [LINK](https://www.youtube.com/watch?v=haHcunJCw2Y)
 
 <br>
 
