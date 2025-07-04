@@ -2,7 +2,7 @@
 
 EffiSend: Next-generation crosschain payment dApp with **MetaMask SDK**, **Circle Wallets**, and **LiFi** (via CCTPv2) — enabling FaceID, QR payments, and instant cross-chain transfers all in one.
 
-<img src="./Images/diagram.drawio.png">
+<img src="./Images/logo.png" width="50%">
 
 <br>
 
@@ -20,7 +20,7 @@ VIDEODEMO: [LINK](pending...)
 
 EffiSend is built entirely from scratch to leverage the most advanced web3 infrastructure for multi-chain payments and wallet management:
 
-<img src="./Images/effisend_architecture.png">
+<img src="./Images/diagram.drawio.png">
 
 - [**MetaMask SDK**](./effisend-meta/src/providers/metamaskProvider.js)  
   Handles native user wallet connections, network switching, account management, and secure token approvals. It ensures users maintain full control over their own MetaMask wallets, while enabling the dApp to interact seamlessly through a custom React context with retries, session persistence, and event tracking.
